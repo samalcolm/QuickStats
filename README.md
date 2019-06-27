@@ -5,6 +5,7 @@ Sourcing quickstats_functions.R loads functions needed to run acreage_yield_data
 
 Example:
 
+'''
 corn.area.harvested.API <- readquickstats(source_desc='SURVEY',
                                      agg_level_desc='COUNTY',
                                      domain_desc='TOTAL',
@@ -12,3 +13,4 @@ corn.area.harvested.API <- readquickstats(source_desc='SURVEY',
                                      state_alpha='IA',
                                      year=2000,
                                      statisticcat_desc='AREA HARVESTED')
+'''
