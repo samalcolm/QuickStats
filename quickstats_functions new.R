@@ -1,63 +1,5 @@
 
-read_acreage_yield <- function(crop, state, output.file=NULL, dsource="API"){
-  require(plyr)
-  require(reshape2)
-  require(abind)
-  
-  # Read each category separately for ease of reading/specifying query
-  area.harvested <- readquickstats(source_desc='SURVEY',
-                                   agg_level_desc='COUNTY',
-                                   domain_desc='TOTAL',
-                                   commodity_desc=crop,
-                                   state_alpha=state,
-                                   statisticcat_desc='AREA HARVESTED',source=dsource)
-  
-  area.planted <- readquickstats(source_desc='SURVEY',
-                                 agg_level_desc='COUNTY',
-                                 domain_desc='TOTAL',
-                                 commodity_desc=crop,
-                                 state_alpha=state,
-                                 statisticcat_desc='AREA PLANTED',source=dsource)
-  
-  crop.yield <- readquickstats(source_desc='SURVEY',
-                               agg_level_desc='COUNTY',
-                               domain_desc='TOTAL',
-                               commodity_desc=crop,
-                               state_alpha=state,
-                               statisticcat_desc='YIELD',source=dsource)
-  
-  qs.data <- rbind.fill(area.harvested,area.planted,crop.yield)
-  
-  return.null <- F
-  if (dsource == "API" & is.null(qs.data)) {return.null <- T
-  } else if (dsource == "ERS" & nrow(qs.data) == 0) {
-    return.null <- T
-  }
-  
-  if(!return.null) {
-    print(paste(crop,state,nrow(qs.data),"rows"))
-    names(qs.data) <- toupper(names(qs.data))
-    qs.data <- qs.data[!(qs.data$UTIL_PRACTICE_DESC=="FORAGE"),]
-    
-    # aggregate and clean data
-    qs.data <- qs.data[!is.na(qs.data$COUNTY_ANSI),]
-    qs.data$VALUE <- gsub(",","",qs.data$VALUE)
-    qs.data$VALUE <- as.numeric(qs.data$VALUE)
-    #  qs.data <- qs.data[!is.na(qs.data$VALUE),]
-    qs.data$FIPS <- as.integer(paste(qs.data$STATE_FIPS_CODE,qs.data$COUNTY_CODE, sep=""))
-    qs.data$YEAR <- as.integer(qs.data$YEAR)
-    
-    # go from wide to less wide
-    
-#    acres.yields.wide <- reshape2::dcast(qs.data[,c("FIPS","YEAR","SHORT_DESC","VALUE")], FIPS + YEAR ~ SHORT_DESC, value.var="VALUE",sum)
-    acres.yields.wide <- reshape2::dcast(qs.data[,c("FIPS","YEAR","COMMODITY_DESC","STATISTICAT_DESC","CLASS_DESC","UTIL_PRACTICE_DESC","PRODN_PRACTICE_DESC","VALUE")], FIPS + YEAR + COMMODITY_DESC+STATISTICAT_DESC+CLASS_DESC+UTIL_PRACTICE_DESC+PRODN_PRACTICE_DESC , value.var="VALUE",sum)
-    acres.yields.wide[acres.yields.wide==0] <- NA
-    return(acres.yields.wide)
-  } else {
-    return(NULL)
-  }
-  #  if (!is.null(output.file)) write.csv(acres.yields.wide,output.file, row.names = F,na="")
-}
+
 
 readquickstats <- function(..., source="API") {
   
@@ -124,7 +66,7 @@ qsAPI <- function(...) {
   invalid.cols <- which(valid.cols != T)
   
   # use your own key, leecher!!!
-  arg_string$key="5AF61548-C01D-3836-8521-759B545EB2FC"
+  arg_string$key=apikey
   
   if (length(invalid.cols) == 0) {
     # Query columns look good - go for it!
